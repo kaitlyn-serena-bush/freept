@@ -1,0 +1,8 @@
+# Never commit keys, the local ledger or logs
+ledger.sqlite*
+*.log
+keys*
+!keys.ps1
+*.env
+.env*
+__pycache__/
