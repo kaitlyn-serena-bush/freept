@@ -18,7 +18,7 @@ it falls back to a local [Ollama](https://ollama.com) model when one is running.
 
 1. Get free API keys from the providers you want (see the table below). Any subset works.
 2. Store the keys:
-   - **Windows:** double-click `FreePT Keys.cmd`. It opens a small window that saves each key
+   - **Windows:** double-click `FreePT Keys.vbs` (or `FreePT Keys.cmd`). It opens a small window that saves each key
      in Windows Credential Manager (as `FreePT:<VAR>`) and has a Test button per key.
    - **macOS / Linux / anywhere:** set environment variables with the names in the table,
      for example `export GROQ_API_KEY=...`.
@@ -27,10 +27,15 @@ it falls back to a local [Ollama](https://ollama.com) model when one is running.
    python freept.py status
    ```
    This lists each provider, whether a key was found, the model FreePT picked, and today's usage.
-4. Start the server (or double-click `FreePT Server.cmd` on Windows):
-   ```
-   python freept.py serve          # port 4000; "serve 5000" for another port
-   ```
+4. Start the server:
+   - **Windows:** double-click `Start FreePT (hidden).vbs` (`FreePT Server.cmd` does the same and
+     closes). It runs with no window (`pythonw`) and logs to `server.log`. Starting it twice is
+     harmless: the second copy sees port 4000 taken and exits. To stop it, end the `pythonw.exe`
+     running `freept.py` in Task Manager.
+   - **Anywhere, or to watch the output:**
+     ```
+     python freept.py serve          # port 4000; "serve 5000" for another port
+     ```
 
 ## Providers
 

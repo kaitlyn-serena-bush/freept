@@ -20,7 +20,7 @@ HTTP 429 with error type "freept_all_spent" means every provider is used up.
 The local ledger (ledger.sqlite next to this file, or $FREEPT_DB) records calls,
 cooldowns and rate-limit headers. It never stores keys.
 """
-import json, os, re, sqlite3, sys, threading, time, urllib.request, urllib.error
+import json, os, re, socket, sqlite3, sys, threading, time, urllib.request, urllib.error
 from datetime import datetime, timedelta, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
@@ -490,7 +490,7 @@ async function load(){
    <td>${x.reset_at?esc(x.reset_at)+'<div class=small>in '+esc(x.reset_in)+'</div>':esc(x.reset_in)}</td>
    <td class=${cls}>${esc(x.state)}${x.note?'<div class=small>'+esc(x.note)+'</div>':''}</td></tr>`}
  document.getElementById('rows').innerHTML=h;
- document.getElementById('sub').textContent='Updated '+new Date().toLocaleTimeString()+' · refreshes every 30 s · budgets are daily caps set in FreePT, "provider says" is what the provider reported on its last answer';
+ document.getElementById('sub').textContent='Updated '+new Date().toLocaleTimeString()+' Â· refreshes every 30 s Â· budgets are daily caps set in FreePT, "provider says" is what the provider reported on its last answer';
  }catch(e){document.getElementById('sub').textContent='Could not reach FreePT: '+e}}
 load();setInterval(load,30000);
 </script></body></html>"""
@@ -543,7 +543,23 @@ class Handler(BaseHTTPRequestHandler):
         sys.stderr.write("%s %s\n" % (time.strftime("%H:%M:%S"), fmt % a))
 
 def cmd_serve(port=4000):
-    srv = ThreadingHTTPServer(("127.0.0.1", port), Handler)
+    if sys.stdout is None or sys.stderr is None:
+        # Started without a console (pythonw / "Start FreePT (hidden).vbs"): log to server.log.
+        log = open(os.path.join(HERE, "server.log"), "a", encoding="utf-8", buffering=1)
+        sys.stdout = sys.stderr = log
+        print("--- %s server start (pid %d)" % (time.strftime("%Y-%m-%d %H:%M:%S"), os.getpid()))
+    class Server(ThreadingHTTPServer):
+        # On Windows SO_REUSEADDR lets a second copy bind the same port; refuse instead.
+        allow_reuse_address = os.name != "nt"
+        def server_bind(self):
+            if os.name == "nt" and hasattr(socket, "SO_EXCLUSIVEADDRUSE"):
+                self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_EXCLUSIVEADDRUSE, 1)
+            ThreadingHTTPServer.server_bind(self)
+    try:
+        srv = Server(("127.0.0.1", port), Handler)
+    except OSError as e:
+        print("FreePT: port %d is already in use (server already running?): %s" % (port, e), file=sys.stderr)
+        return 1
     print("FreePT listening on http://127.0.0.1:%d/v1  (model: freept, freept/fast, or a provider name)" % port)
     print("Usage meter: http://127.0.0.1:%d/" % port)
     srv.serve_forever()
@@ -567,7 +583,7 @@ def main(argv):
         except AllSpent as e:
             print(e, file=sys.stderr); return 2
     elif c == "serve":
-        cmd_serve(int(argv[1]) if len(argv) > 1 else 4000)
+        return cmd_serve(int(argv[1]) if len(argv) > 1 else 4000) or 0
     else:
         print(__doc__); return 1
     return 0

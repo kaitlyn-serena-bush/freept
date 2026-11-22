@@ -1,2 +1,2 @@
 @echo off
-start "" powershell -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File "%~dp0keys.ps1"
+start "" wscript.exe "%~dp0FreePT Keys.vbs"

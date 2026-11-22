@@ -21,6 +21,9 @@ python freept.py status        # keys found, model picked per provider, today's 
 python freept.py usage         # what's left per provider and when each resets
 python freept.py serve         # OpenAI-compatible API at http://127.0.0.1:4000/v1, meter at /
 ```
+On Windows, start the server with `Start FreePT (hidden).vbs` (no window, logs to `server.log`)
+and the key window with `FreePT Keys.vbs`. Don't launch it with `cmd /c` from a background job:
+with Windows Terminal as the default terminal that leaves a console window open the whole time.
 
 ## Routes (the `model` field)
 - `freept`: best quality first. `freept/fast`: fastest first.
